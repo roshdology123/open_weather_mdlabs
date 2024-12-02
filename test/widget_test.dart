@@ -8,7 +8,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:open_weather_mdlabs/main.dart';
 import 'package:open_weather_mdlabs/weather_app.dart';
 
 void main() {

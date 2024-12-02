@@ -1,8 +1,12 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:open_weather_mdlabs/ui/widgets/custom_button.dart';
+import 'package:open_weather_mdlabs/ui/widgets/weather_details.dart';
 
 import '../data/model/weather_response.dart';
 import '../data/service/weather_service.dart';
+import 'widgets/custom_text_field.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
@@ -37,16 +41,17 @@ class _WeatherAppState extends State<WeatherPage> {
   }
 
   void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    final snackBar = SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        content: AwesomeSnackbarContent(
+            title: 'Error',
+            message: message,
+            contentType: ContentType.failure));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
   }
 
   @override
@@ -58,74 +63,31 @@ class _WeatherAppState extends State<WeatherPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildCityInput(),
+            CustomTextField(cityController: _cityController),
             const SizedBox(height: 16),
-            _buildGetWeatherButton(),
+            CustomButton(
+              text: "Get Weather",
+              onTap: _fetchWeather,
+            ),
             const SizedBox(height: 16),
             if (_isLoading) _buildLoadingIndicator(),
-            if (_weatherResponse != null) _buildWeatherDetails(),
+            if (_weatherResponse != null)
+              WeatherDetails(
+                cityName: _weatherResponse!.name,
+                temperature: _weatherResponse!.main.temp,
+                condition: _weatherResponse!.weather[0].description,
+                iconUrl:
+                    "http://openweathermap.org/img/wn/${_weatherResponse!.weather[0].icon}@2x.png",
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCityInput() {
-    return TextField(
-      controller: _cityController,
-      decoration: InputDecoration(
-        labelText: "Enter City Name",
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        prefixIcon: const Icon(Icons.location_city),
-      ),
-    );
-  }
-
-  Widget _buildGetWeatherButton() {
-    return ElevatedButton(
-      onPressed: _fetchWeather,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: const Text("Get Weather", style: TextStyle(fontSize: 16)),
-    );
-  }
-
   Widget _buildLoadingIndicator() {
     return const Center(
       child: CircularProgressIndicator(),
-    );
-  }
-
-  Widget _buildWeatherDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          "City: ${_weatherResponse!.name}",
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Temperature: ${_weatherResponse!.main.temp}°C",
-          style: const TextStyle(fontSize: 20),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Condition: ${_weatherResponse!.weather[0].description}",
-          style: const TextStyle(fontSize: 20),
-        ),
-        const SizedBox(height: 16),
-        Image.network(
-          "http://openweathermap.org/img/wn/${_weatherResponse!.weather[0].icon}@2x.png",
-          errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
-        ),
-      ],
     );
   }
 }
