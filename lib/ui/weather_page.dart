@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:lottie/lottie.dart';
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 
 import '../data/model/weather_response.dart';
 import '../data/service/weather_service.dart';
@@ -10,36 +8,14 @@ class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
 
   @override
-  State<WeatherPage> createState() => _WeatherPageState();
+  State<WeatherPage> createState() => _WeatherAppState();
 }
 
-class _WeatherPageState extends State<WeatherPage> {
+class _WeatherAppState extends State<WeatherPage> {
   final TextEditingController _cityController = TextEditingController();
   final WeatherService _weatherService = WeatherService(Dio());
   WeatherResponse? _weatherResponse;
   bool _isLoading = false;
-
-  String getWeatherAnimation(String? mainCondition) {
-    if (mainCondition == null) {
-      return 'assets/lottie/sunny.json';
-    }
-
-    final condition = mainCondition.toLowerCase();
-
-    if (['clouds', 'mist', 'smoke', 'haze', 'dust', 'fog']
-        .any((element) => condition.contains(element))) {
-      return 'assets/lottie/cloud.json';
-    } else if (['rain', 'drizzle', 'shower rain']
-        .any((element) => condition.contains(element))) {
-      return 'assets/lottie/rain.json';
-    } else if (['thunderstorm'].any((element) => condition.contains(element))) {
-      return 'assets/lottie/thunder.json';
-    } else if (['clear'].any((element) => condition.contains(element))) {
-      return 'assets/lottie/sunny.json';
-    } else {
-      return 'assets/lottie/sunny.json';
-    }
-  }
 
   Future<void> _fetchWeather() async {
     setState(() {
@@ -62,19 +38,16 @@ class _WeatherPageState extends State<WeatherPage> {
   }
 
   void _showErrorMessage(String message) {
-    final snackBar = SnackBar(
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
-        title: "Error",
-        message: message,
-        contentType: ContentType.failure,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(snackBar);
   }
 
   @override
@@ -90,7 +63,7 @@ class _WeatherPageState extends State<WeatherPage> {
             const SizedBox(height: 16),
             _buildGetWeatherButton(),
             const SizedBox(height: 16),
-            if (_isLoading) _buildLoadingWidget(),
+            if (_isLoading) _buildLoadingIndicator(),
             if (_weatherResponse != null) _buildWeatherDetails(),
           ],
         ),
@@ -124,39 +97,35 @@ class _WeatherPageState extends State<WeatherPage> {
     );
   }
 
-  Widget _buildLoadingWidget() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const CircularProgressIndicator(),
-        const SizedBox(height: 16),
-        const Text("Getting weather data...", style: TextStyle(fontSize: 18)),
-      ],
+  Widget _buildLoadingIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 
   Widget _buildWeatherDetails() {
-    final weather = _weatherResponse!;
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          "${weather.main.temp.round()}°C",
-          style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold),
+          "City: ${_weatherResponse!.name}",
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        const SizedBox(height: 8),
         Text(
-          weather.name,
-          style: const TextStyle(fontSize: 30),
+          "Temperature: ${_weatherResponse!.main.temp}°C",
+          style: const TextStyle(fontSize: 20),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
         Text(
-          weather.weather.first.description,
-          style: const TextStyle(fontSize: 30),
+          "Condition: ${_weatherResponse!.weather[0].description}",
+          style: const TextStyle(fontSize: 20),
         ),
-        const SizedBox(height: 20),
-        Lottie.asset(getWeatherAnimation(weather.weather.first.description),
-            width: 150, height: 150),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        Image.network(
+          "http://openweathermap.org/img/wn/${_weatherResponse!.weather[0].icon}@2x.png",
+          errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+        ),
       ],
     );
   }
