@@ -16,7 +16,6 @@ class _WeatherAppState extends State<WeatherPage> {
   final WeatherService _weatherService = WeatherService(Dio());
   WeatherResponse? _weatherResponse;
   bool _isLoading = false;
-
   Future<void> _fetchWeather() async {
     setState(() {
       _isLoading = true;
